@@ -110,7 +110,7 @@ apt_cache() {
 			# and will find the associated *.orig.tar.gz, *.diff.gz, and/or
             # *.tar.gz as they are needed.
 			*.dsc) apt_cache_source "$DIST" "$DISTCACHE" "$PATHNAME" "$COMP" "$PACKAGE";;
-			*.debian.tar.gz|*.diff.gz|*.orig.tar.gz|*.tar.gz|*.deb-control|*.dsc-cached) ;;
+			*.debian.tar.gz|*.diff.gz|*.orig.tar.gz|*.tar.gz|*.tar.xz|*.deb-control|*.dsc-cached) ;;
 
 			*) echo "# [freight] skipping extraneous file $PATHNAME" >&2;;
 		esac
@@ -337,14 +337,26 @@ apt_cache_source() {
 	DIRNAME="$(dirname "$PATHNAME")"
 	DSC_FILENAME="${NAME}_${VERSION%*:}.dsc"
 	DEBTAR_FILENAME="${NAME}_${VERSION%*:}.debian.tar.gz"
+	DEBTAR_XZ_FILENAME="${NAME}_${VERSION%*:}.debian.tar.xz"
 	DIFFGZ_FILENAME="${NAME}_${VERSION%*:}.diff.gz"
 	ORIG_FILENAME="${NAME}_${ORIG_VERSION}.orig.tar.gz"
-	TAR_FILENAME="${NAME}_${VERSION%*:}.tar.gz"
+	TARGZ_FILENAME="${NAME}_${VERSION%*:}.tar.gz"
+	TARXZ_FILENAME="${NAME}_${VERSION%*:}.tar.xz"
 
     # Find which style of diff they're using.
-	if [ -f "$VARLIB/apt/$DIST/$DIRNAME/$DEBTAR_FILENAME" ]
-	then DIFF_FILENAME=${DEBTAR_FILENAME}
-	else DIFF_FILENAME=${DIFFGZ_FILENAME}
+	if [ -f "$VARLIB/apt/$DIST/$DIRNAME/$DEBTAR_FILENAME" ]; then
+		DIFF_FILENAME=${DEBTAR_FILENAME}
+	elif [ -f "$VARLIB/apt/$DIST/$DIRNAME/$DEBTAR_FILENAME" ]; then
+		DIFF_FILENAME=${DEBTAR_XZ_FILENAME}
+	else
+		DIFF_FILENAME=${DIFFGZ_FILENAME}
+	fi
+
+	# Find which type of tarball we have
+	if [ -f "$VARLIB/apt/$DIST/$DIRNAME/$TARXZ_FILENAME" ]; then
+		TAR_FILENAME=${TARXZ_FILENAME}
+	else
+		TAR_FILENAME=${TARGZ_FILENAME}
 	fi
 
 	# Verify this package by ensuring the other necessary files are present.
